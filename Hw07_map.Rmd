@@ -125,6 +125,12 @@ corruption_year <- ggplot(africa_WB_clean, aes(map_id = country, frame = Year)) 
   scale_fill_brewer(palette = "Blues", na.value = "gray") +
   ggthemes::theme_map()
 
-gganimate(corruption_year)
+corr <- gganimate(corruption_year)
+```
+
+```{r}
+gganimate_save(corr, "corruption.gif", ani.width = 400, ani.height = 400)
 
 ```
+
+![Corruption](corruption.gif)
