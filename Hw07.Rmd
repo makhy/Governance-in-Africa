@@ -1,0 +1,156 @@
+---
+title: "Hw07"
+author: "Hy Mak"
+date: "5/13/2018"
+output: github_document
+---
+
+```{r setup}
+library(rsparkling)
+library(sparklyr)
+library(h2o)
+library(tidyverse)
+library(sparklyr)
+library(titanic)
+spark_install(version = "2.1.0")
+
+set.seed(1234)
+theme_set(theme_minimal())
+
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  echo = FALSE
+)
+
+```
+
+```{r}
+sc <- spark_connect(master = "local")
+
+titanic_tbl <- copy_to(sc, titanic_train, "titanic", overwrite = TRUE)
+
+#Model: Gender, Fare, Passenger class, Age 
+titanic_final <- titanic_tbl %>% 
+  mutate(Pclass = as.character(Pclass),
+         Fare = if_else(is.na(Fare), mean(Fare), Fare),
+         Survived = as.numeric(Survived)) %>%
+  filter(!is.na(Age)) %>%
+  sdf_register("titanic_final")
+  
+partition <- titanic_final %>%
+  select(Survived, Pclass, Sex, Age, Fare) %>%
+  sdf_partition(train = 0.75, test = 0.25, seed = 1234)
+
+partition
+
+train_tbl <- partition$train
+test_tbl <- partition$test
+```
+
+```{r}
+# Model survival as a function of my strongest model
+ml_formula <- formula(Survived ~ Pclass + Sex + Age + Fare)
+
+# Train a logistic regression model
+ml_log <- ml_logistic_regression(train_tbl, ml_formula)
+
+# Decision Tree
+ml_dt <- ml_decision_tree(train_tbl, ml_formula)
+
+# Random Forest
+ml_rf <- ml_random_forest(train_tbl, ml_formula)
+
+# Gradient Boosted Tree
+ml_gbt <- ml_gradient_boosted_trees(train_tbl, ml_formula)
+```
+
+```{r}
+ml_models <- list(
+  "Logistic Regression" = ml_log,
+  "Decision Tree" = ml_dt,
+  "Random Forest" = ml_rf,
+  "Gradient Boosted Trees" = ml_gbt
+)
+
+# Create a function for scoring
+score_test <- function(model, data = test_tbl){
+  pred <- sdf_predict(model, data)
+  select(pred, Survived, prediction)
+}
+
+# Score all the models
+ml_score <- map(ml_models, score_test_data)
+```
+
+```{r}
+# Lift function
+calculate_lift <- function(scored_data) {
+  scored_data %>%
+    mutate(bin = ntile(desc(prediction), 10)) %>% 
+    group_by(bin) %>% 
+    summarize(count = sum(Survived)) %>% 
+    mutate(prop = count / sum(count)) %>% 
+    arrange(bin) %>% 
+    mutate(prop = cumsum(prop)) %>% 
+    select(-count) %>% 
+    collect() %>% 
+    as.data.frame()
+}
+
+# Initialize results
+ml_gains <- data_frame(
+  bin = 1:10,
+  prop = seq(0, 1, len = 10),
+  model = "Base"
+)
+
+# Calculate lift
+for(i in names(ml_score)){
+  ml_gains <- ml_score[[i]] %>%
+    calculate_lift %>%
+    mutate(model = i) %>%
+    bind_rows(ml_gains, .)
+}
+
+# Plot results
+ggplot(ml_gains, aes(x = bin, y = prop, color = model)) +
+  geom_point() +
+  geom_line() +
+  scale_color_brewer(type = "qual") +
+  labs(title = "Lift Chart for Predicting Survival",
+       subtitle = "Test Data Set",
+       x = NULL,
+       y = NULL)
+```
+
+```{r}
+# Function for calculating accuracy
+calc_accuracy <- function(data, cutpoint = 0.5){
+  data %>% 
+    mutate(prediction = if_else(prediction > cutpoint, 1.0, 0.0)) %>%
+    ml_classification_eval("prediction", "Survived", "accuracy")
+}
+
+# Calculate AUC and accuracy
+perf_metrics <- data_frame(
+  model = names(ml_score),
+  AUC = 100 * map_dbl(ml_score, ml_binary_classification_eval, "Survived", "prediction"),
+  Accuracy = 100 * map_dbl(ml_score, calc_accuracy)
+  )
+perf_metrics
+```
+
+```{r}
+# Plot results
+gather(perf_metrics, metric, value, AUC, Accuracy) %>%
+  ggplot(aes(reorder(model, value), value, 
+             fill = metric)) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  coord_flip() +
+  theme_minimal(base_size = 10) +
+  theme(legend.key.size = unit(0.35, "cm")) +
+  labs(title = "Models' Performance",
+       x = NULL,
+       y = "Percent")
+```
