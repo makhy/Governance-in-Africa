@@ -43,7 +43,7 @@ knitr::opts_chunk$set(
 
 In this report, I would like to examine three governance indicators: 1)the rule of law, 2) political stability, and 3)control of corruption, in 48 Sub-Saharan African countries from 1996 to 2016. The dataset is drawn from the World Bank's Governance indicators. The score is measured by the percentile in the world rank.
 
-#1. Import Africa map
+#1.Import Africa map
 
 ```{r}
 # Import World map with country borders
@@ -52,9 +52,6 @@ world <- readShapeSpatial( "TM_WORLD_BORDERS-0/TM_WORLD_BORDERS-0.3.shp")
 # Keep only Africa
 Africa <- world[world@data$REGION==2 , ]
 
-# Fortify the map for ggplot use
-fortify(Africa) %>%
-  head()
 
 # Mutate the id to match World Bank dataset
 Africa2 <- Africa %>%
@@ -131,7 +128,7 @@ ggplot(aes(map_id = country)) +
 The graph shows the Southern African countries, which include stable democracies such as South Africa and Botswana, are ranked higher (indicated by dark red) in terms of the performance of the rule of law. In addition, coastal countries generally have better legal system than the inland countries (indicated in light red or white). 
 
 
-#4. Political Stability in Africa
+#4.Political Stability in Africa
 
 ```{r}
 africa_WB_clean %>%
@@ -162,7 +159,7 @@ ggplot(aes(map_id = country)) +
 The distribution of this map to a certain extent resembles the rule of law map - coastal countries generally have better political stability than inland countries. That means, in Africa, a better legal system tends to correlate with a more stable political enviornment. However, there are exceptions. For instance, South Africa has good rule of law, but wansn't politically stable (<36th percentile) during 1996 - 2006.
 
 
-#5. Control of Corruption in Africa
+#5.Control of Corruption in Africa
 
 ```{r}
 #match id column of map with country of dataset

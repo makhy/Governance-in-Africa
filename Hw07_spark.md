@@ -3,8 +3,8 @@ Hw07\_spark
 Hy Mak
 5/13/2018
 
-1. Connect to Spark and Read Titanic Data
-=========================================
+1.Connect to Spark and Read Titanic Data
+========================================
 
 ``` r
 #Connect to remote Spark cluster
@@ -24,8 +24,8 @@ titanic_final <- titanic_tbl %>%
   sdf_register("titanic_final")
 ```
 
-2. Build the Model: Gender, Fare, Pclass, Age
-=============================================
+2.Build the Model: Gender, Fare, Pclass, Age
+============================================
 
 ``` r
 #Partition the data
@@ -39,8 +39,8 @@ train_tbl <- partition$train
 test_tbl <- partition$test
 ```
 
-3. Test the model using 4 algorithms in Sparklyr
-================================================
+3.Test the model using 4 algorithms in Sparklyr
+===============================================
 
 ``` r
 # The base model
@@ -76,8 +76,8 @@ score_test_data <- function(model, data = test_tbl){
 ml_score <- map(ml_models, score_test_data)
 ```
 
-4. Compare algorithms: Which one is the best?
-=============================================
+4.Compare algorithms: Which one is the best?
+============================================
 
 ``` r
 # Lift function

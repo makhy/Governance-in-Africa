@@ -8,16 +8,8 @@ Introduction
 
 In this report, I would like to examine three governance indicators: 1)the rule of law, 2) political stability, and 3)control of corruption, in 48 Sub-Saharan African countries from 1996 to 2016. The dataset is drawn from the World Bank's Governance indicators. The score is measured by the percentile in the world rank.
 
-1. Import Africa map
-====================
-
-    ##   long  lat order  hole piece id group
-    ## 1 2.96 36.8     1 FALSE     1  1   1.1
-    ## 2 2.98 36.8     2 FALSE     1  1   1.1
-    ## 3 3.00 36.8     3 FALSE     1  1   1.1
-    ## 4 3.02 36.8     4 FALSE     1  1   1.1
-    ## 5 3.03 36.8     5 FALSE     1  1   1.1
-    ## 6 3.04 36.8     6 FALSE     1  1   1.1
+1.Import Africa map
+===================
 
 2.Import Governance Data from World Bank
 ========================================
@@ -29,15 +21,15 @@ In this report, I would like to examine three governance indicators: 1)the rule 
 
 The graph shows the Southern African countries, which include stable democracies such as South Africa and Botswana, are ranked higher (indicated by dark red) in terms of the performance of the rule of law. In addition, coastal countries generally have better legal system than the inland countries (indicated in light red or white).
 
-4. Political Stability in Africa
-================================
+4.Political Stability in Africa
+===============================
 
 ![](Hw07_map_files/figure-markdown_github/unnamed-chunk-4-1.png)
 
 The distribution of this map to a certain extent resembles the rule of law map - coastal countries generally have better political stability than inland countries. That means, in Africa, a better legal system tends to correlate with a more stable political enviornment. However, there are exceptions. For instance, South Africa has good rule of law, but wansn't politically stable (&lt;36th percentile) during 1996 - 2006.
 
-5. Control of Corruption in Africa
-==================================
+5.Control of Corruption in Africa
+=================================
 
 ![Control of Corruption](corruption.gif)
 
