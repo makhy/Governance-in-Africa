@@ -1,0 +1,88 @@
+---
+title: "Hw07_map"
+author: "Hy Mak"
+date: "5/14/2018"
+output: html_document
+---
+
+```{r setup}
+library(tidyverse)
+library(knitr)
+library(broom)
+library(stringr)
+library(modelr)
+library(forcats)
+library(ggmap)
+library(rgdal)
+library(maps)
+library(maptools)
+library(readr)
+library(tidyr)
+
+options(digits = 3)
+set.seed(1234)
+theme_set(theme_minimal())
+
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  echo = FALSE
+)
+```
+
+```{r}
+help(package = "maps")
+
+```
+
+```{r}
+library(raster)
+world <- readShapeSpatial( "TM_WORLD_BORDERS-0/TM_WORLD_BORDERS-0.3.shp")
+
+# First we can plot the complete shape file that is under the spdf format
+# http://www.r-graph-gallery.com/169-170-basic-manipulation-of-shapefiles/
+# Keep only Africa
+Africa <- world[world@data$REGION==2 , ]
+plot(africa , xlim=c(-20,60) , ylim=c(-40,35) )
+```
+
+```{r}
+africa_WB <- read_csv("~/Desktop/cfss/hw07/africa_WB.csv")
+
+africa <- africa_WB %>%
+    rename(Rule_of_Law = "Rule of Law: Percentile Rank [RL.PER.RNK]",
+           Anti_Corruption = "Control of Corruption: Percentile Rank [CC.PER.RNK]",
+           Gov_Effectiveness = "Government Effectiveness: Percentile Rank [GE.PER.RNK]",
+           Pol_Stability = "Political Stability and Absence of Violence/Terrorism: Percentile Rank [PV.PER.RNK]",
+           Regulatory = "Regulatory Quality: Percentile Rank [RQ.PER.RNK]",
+           Year = "Time",
+           Country = "Country Name") %>%
+#Select 
+    dplyr::select(Year, 
+           Country, 
+           Rule_of_Law, 
+           Anti_Corruption,
+           Pol_Stability) %>%
+#Change Year to numeric   
+    mutate(Year = as.numeric(Year))
+
+africa
+```
+
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
