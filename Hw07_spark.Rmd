@@ -1,14 +1,15 @@
 ---
-title: "Hw07"
+title: "Hw07_spark"
 author: "Hy Mak"
 date: "5/13/2018"
 output: github_document
 ---
 
-```{r setup}
+```{r setup, include = FALSE}
+#load libraries
 library(rsparkling)
-library(sparklyr)
 library(h2o)
+library(sparklyr)
 library(tidyverse)
 library(sparklyr)
 library(titanic)
@@ -17,55 +18,67 @@ spark_install(version = "2.1.0")
 set.seed(1234)
 theme_set(theme_minimal())
 
+#Set global option to hide messages and warnings
 knitr::opts_chunk$set(
   message = FALSE,
-  warning = FALSE,
-  echo = FALSE
+  warning = FALSE
 )
 
 ```
 
+#1. Connect to Spark and Read Titanic Data
+
 ```{r}
+#Connect to remote Spark cluster
 sc <- spark_connect(master = "local")
 
+#Load Titanic data frame
 titanic_tbl <- copy_to(sc, titanic_train, "titanic", overwrite = TRUE)
 
-#Model: Gender, Fare, Passenger class, Age 
+#Mutate variables to fit in dataframe
 titanic_final <- titanic_tbl %>% 
   mutate(Pclass = as.character(Pclass),
-         Fare = if_else(is.na(Fare), mean(Fare), Fare),
+         Fare = if_else(is.na(Fare), 
+                        mean(Fare), Fare),
          Survived = as.numeric(Survived)) %>%
   filter(!is.na(Age)) %>%
+#Store the table in Spark cluster
   sdf_register("titanic_final")
-  
+```
+
+#2. Build the Model: Gender, Fare, Pclass, Age
+
+```{r}
+#Partition the data
 partition <- titanic_final %>%
+#Create the strongest model I built last time
   select(Survived, Pclass, Sex, Age, Fare) %>%
   sdf_partition(train = 0.75, test = 0.25, seed = 1234)
 
-partition
-
+#Create table references
 train_tbl <- partition$train
 test_tbl <- partition$test
 ```
 
+#3. Test the model using 4 algorithms in Sparklyr
+
 ```{r}
-# Model survival as a function of my strongest model
+# The base model
 ml_formula <- formula(Survived ~ Pclass + Sex + Age + Fare)
 
-# Train a logistic regression model
+# Train the logistic regression model
 ml_log <- ml_logistic_regression(train_tbl, ml_formula)
 
-# Decision Tree
+# Decision Tree algorithm
 ml_dt <- ml_decision_tree(train_tbl, ml_formula)
 
-# Random Forest
+# Random Forest algorithm
 ml_rf <- ml_random_forest(train_tbl, ml_formula)
 
-# Gradient Boosted Tree
+# Gradient Boosted Tree algorithm
 ml_gbt <- ml_gradient_boosted_trees(train_tbl, ml_formula)
-```
 
-```{r}
+#Bundle the models into a single list object
 ml_models <- list(
   "Logistic Regression" = ml_log,
   "Decision Tree" = ml_dt,
@@ -74,7 +87,7 @@ ml_models <- list(
 )
 
 # Create a function for scoring
-score_test <- function(model, data = test_tbl){
+score_test_data <- function(model, data = test_tbl){
   pred <- sdf_predict(model, data)
   select(pred, Survived, prediction)
 }
@@ -82,6 +95,8 @@ score_test <- function(model, data = test_tbl){
 # Score all the models
 ml_score <- map(ml_models, score_test_data)
 ```
+
+#4. Compare algorithms: Which one is the best?
 
 ```{r}
 # Lift function
@@ -105,7 +120,7 @@ ml_gains <- data_frame(
   model = "Base"
 )
 
-# Calculate lift
+# Calculate lift score
 for(i in names(ml_score)){
   ml_gains <- ml_score[[i]] %>%
     calculate_lift %>%
@@ -113,7 +128,9 @@ for(i in names(ml_score)){
     bind_rows(ml_gains, .)
 }
 
-# Plot results
+as_tibble(ml_gains)
+
+# Plot the results
 ggplot(ml_gains, aes(x = bin, y = prop, color = model)) +
   geom_point() +
   geom_line() +
@@ -123,6 +140,12 @@ ggplot(ml_gains, aes(x = bin, y = prop, color = model)) +
        x = NULL,
        y = NULL)
 ```
+
+###Analysis: 
+
+The lift chart indicates that the random forest method generates the best prediction among all algorithms.
+
+#5.Calculate accuracy and AUC metrics
 
 ```{r}
 # Function for calculating accuracy
@@ -139,9 +162,7 @@ perf_metrics <- data_frame(
   Accuracy = 100 * map_dbl(ml_score, calc_accuracy)
   )
 perf_metrics
-```
 
-```{r}
 # Plot results
 gather(perf_metrics, metric, value, AUC, Accuracy) %>%
   ggplot(aes(reorder(model, value), value, 
@@ -154,3 +175,7 @@ gather(perf_metrics, metric, value, AUC, Accuracy) %>%
        x = NULL,
        y = "Percent")
 ```
+
+###Analysis: 
+
+The random forest model performs the best. The plot shows it has the strongest accuracy and AUC metrics among all algorithms. 
