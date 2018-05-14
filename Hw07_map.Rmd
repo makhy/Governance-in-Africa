@@ -102,18 +102,6 @@ ggplot(aes(map_id = country)) +
   theme_void()
 ```
 
-```{r}
-africa_WB_clean %>%
-ggplot(aes(map_id = country)) +
-  geom_map(aes(fill = corruption_cut), map = Africa2) +
-  expand_limits(x = Africa2$long, y = Africa2$lat) +
-  ggthemes::theme_map() +
-  labs(title = "Control of Corruption in Africa",
-        fill = NULL) +
-  scale_fill_brewer(palette = "Blues", na.value = "gray") +
-  coord_fixed(1.3) +
-  theme_void()
-```
 
 ```{r}
 africa_WB_clean %>%
@@ -129,19 +117,14 @@ ggplot(aes(map_id = country)) +
 ```
 
 ```{r}
-p <- ggplot(africa_WB_clean, aes(map_id = country, frame = Year)) +
-  geom_map(aes(fill = law_cut), map = Africa2) +
+corruption_year <- ggplot(africa_WB_clean, aes(map_id = country, frame = Year)) +
+  geom_map(aes(fill = corruption_cut), map = Africa2) +
   expand_limits(x = Africa2$long, y = Africa2$lat) +
-  labs(title = "Rule of Law in Africa",
+  labs(title = "Control of Corruption in Africa",
         fill = NULL) +
   scale_fill_brewer(palette = "Blues", na.value = "gray") +
-  ggthemes::theme_map() +
-  theme(legend.position = "none")
+  ggthemes::theme_map()
 
-gganimate(p)
-
-```
-
-```{r}
+gganimate(corruption_year)
 
 ```
