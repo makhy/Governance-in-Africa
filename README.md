@@ -14,3 +14,5 @@ For the md file (without codes) for the Map of Governance in Africa 1996 - 2016)
 [here](Hw07_map.md).
 
 For the raw codes please click [here](Hw07_map.Rmd).
+
+![](corruption.gif)
